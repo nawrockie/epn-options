@@ -21,10 +21,10 @@ use warnings;
 #                 (one of "type", "default", "group", "requires", "incompatible", "preamble", "help")
 #         value:  string explaining 2D key:
 #                 "type":          "boolean", "string", "int" or "real"
-#                 "default":       default value for option
-#                 "group":         integer denoting group number this option belongs to
+#                 "default":       default value for option, in double or single quotes
+#                 "group":         positive integer denoting group number this option belongs to
 #                 "requires":      string of 0 or more other options this option requires to work, each separated by a ','
-#                 "incompatiable": string of 0 or more other options this option is incompatible with, each separated by a ','
+#                 "incompatible":  string of 0 or more other options this option is incompatible with, each separated by a ','
 #                 "preamble":      string describing option for preamble section (beginning of output from script)
 #                 "help":          string describing option for help section (printed if -h used)
 #                 "setby":         '1' if option set by user, else 'undef'
@@ -660,8 +660,8 @@ sub opt_PreambleRHS {
 # Subroutine: verify_integer()
 # Incept:     EPN, Wed Oct 29 10:14:06 2014
 # 
-# Purpose:    Verify that $x is an integer. Return '1' if it is,
-#             else return '0'.
+# Purpose:  Verify that $x is a (positive or negative) integer. Return
+#           '1' if it is, else return '0'.
 #
 # Arguments:
 # $x:         value to check
@@ -675,7 +675,7 @@ sub verify_integer {
 
   my ($x) = @_;
 
-  return ($x =~ m/^\d+$/) ? 1 : 0;
+  return ($x =~ m/^\-?\d+$/) ? 1 : 0;
 }
 
 #####################################################################
@@ -702,6 +702,33 @@ sub verify_real {
   if($x =~ m/^\-?\d*\.?\d*$/)     { return 1; } # matches: 1, 3.4, 53.43, .3, .333, 0., 155., 150, -1, -3.4, -53.43, -.3, -.333, -0., -155., -150
   if($x =~ m/^\-?\d+[Ee]\-?\d*$/) { return 1; } # matches: 3E5, -3E5, -3E-5, 3e5, -3e5, -3e-5
   return 0;
+}
+
+#################################################################
+# Subroutine : maxLengthScalarInArray()
+# Incept:      EPN, Tue Nov  4 15:19:44 2008 [ssu-align]
+# 
+# Purpose:     Return the maximum length of a scalar in an array
+#
+# Arguments: 
+#   $AR: reference to the array
+# 
+# Returns:     The length of the maximum length scalar.
+#
+################################################################# 
+sub maxLengthScalarInArray {
+  my $nargs_expected = 1;
+  my $sub_name = "maxLengthScalarInArray()";
+  if(scalar(@_) != $nargs_expected) { printf STDERR ("ERROR, $sub_name entered with %d != %d input arguments.\n", scalar(@_), $nargs_expected); exit(1); } 
+  my ($AR) = $_[0];
+
+  my $max = 0;
+  my $len = 0;
+  foreach my $el (@{$AR}) { 
+    $len = length($el);
+    if($len > $max) { $max = $len; }
+  }
+  return $max;
 }
 
 ####################################################################
