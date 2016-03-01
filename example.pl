@@ -59,7 +59,9 @@ opt_Add("--outfile",    "string",  undef,                    3,    undef, undef,
 
 # This section needs to be kept in sync (manually) with the opt_Add() section above
 my %GetOptions_H = ();
-my $usage    = "Usage: example.pl [-options] <ceiling: no numbers above this value will be printed>";
+my $usage    = "example.pl: print numbers up until a maximum ceiling\n\n";
+   $usage   .= "Usage: example.pl [-options] <ceiling: no numbers above this value will be printed>\n";
+   $usage   .= "\nFor example:\nperl example.pl 10\n";
 
 my $options_okay = 
     &GetOptions('h'            => \$GetOptions_H{"-h"}, 
