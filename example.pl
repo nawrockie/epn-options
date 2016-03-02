@@ -27,7 +27,7 @@ require "epn-options.pm";
 #                 "default":       default value for option
 #                 "group":         integer denoting group number this option belongs to
 #                 "requires":      string of 0 or more other options this option requires to work, each separated by a ','
-#                 "incompatiable": string of 0 or more other options this option is incompatible with, each separated by a ','
+#                 "incompatiale":  string of 0 or more other options this option is incompatible with, each separated by a ','
 #                 "preamble":      string describing option for preamble section (beginning of output from script)
 #                 "help":          string describing option for help section (printed if -h used)
 #                 "setby":         '1' if option set by user, else 'undef'
@@ -42,21 +42,22 @@ my %opt_group_desc_H = ();
 
 # Add all options to %opt_HH and @opt_order_A.
 # This section needs to be kept in sync (manually) with the &GetOptions call below
-
+# The opt_Add() function is the way we add options to %opt_HH.
+# It takes values of for each of the 2nd dim keys listed above.
 $opt_group_desc_H{"1"} = "basic options";
-#     option            type       default               group   requires incompat   preamble-output   help-output    
+#       option          type       default               group   requires incompat   preamble-output   help-output    
 opt_Add("-h",           "boolean", 0,                        0,    undef, undef,     undef,            "display this help",                  \%opt_HH, \@opt_order_A);
 opt_Add("-r",           "boolean", 0,                        1,    undef, undef,     "reverse order",  "print numbers in reverse order",     \%opt_HH, \@opt_order_A);
 opt_Add("-1",           "boolean", 0,                        1,    undef, undef,     "single line",    "print all numbers on a single line", \%opt_HH, \@opt_order_A);
 
 $opt_group_desc_H{"2"} = "options affecting difference (step size) between successive numbers (only 1 allowed)";
-#     option            type       default               group   requires incompat         preamble-output                      help-output                      
+#       option          type       default               group   requires incompat         preamble-output                      help-output                      
 opt_Add("--step",       "integer", 1,                        2,    undef, "--realstep",    "integer step size between numbers", "set integer step size between numbers to <n>",               \%opt_HH, \@opt_order_A);
 opt_Add("--mult",       "boolean", 0,                        2, "--step", "--realstep",    "multiplicative mode",               "multiplicative mode, number n+1 is a multiple of number n",  \%opt_HH, \@opt_order_A);
 opt_Add("--realstep",   "real",    undef,                    2,    undef, "--step,--mult", "step size between numbers (real)",  "set (real value) step size between numbers to <x>",          \%opt_HH, \@opt_order_A);
 
 $opt_group_desc_H{"3"} = "options affecting where output goes";
-#     option            type       default               group   requires incompat   preamble-output           help-output    
+#       option          type       default               group   requires incompat   preamble-output           help-output    
 opt_Add("--outfile",    "string",  undef,                    3,    undef, undef,     "saving output to file",  "saving output to file <s>", \%opt_HH, \@opt_order_A);
 
 # This section needs to be kept in sync (manually) with the opt_Add() section above
@@ -102,7 +103,7 @@ if($max =~ m/^\-/) {
   die "ERROR, the ceiling value (the one command line argument) must be a positive real number, got $max";
 }
 
-# set options in opt_HH
+# set options in %opt_HH
 opt_SetFromUserHash(\%GetOptions_H, \%opt_HH);
 
 # validate options (check for conflicts)
