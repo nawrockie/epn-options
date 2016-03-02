@@ -437,8 +437,8 @@ sub opt_ValidateSet {
   # check required options
   foreach $optname (@{$opt_order_AR}) { 
     if($opt_HHR->{$optname}{"setby"} eq "user") { 
-      if(defined $opt_HHR->{$optname}{"required"}) { 
-        @optname2_A = split(",", $opt_HHR->{$optname}{"required"});
+      if(defined $opt_HHR->{$optname}{"requires"}) { 
+        @optname2_A = split(",", $opt_HHR->{$optname}{"requires"});
         foreach $optname2 (@optname2_A) { 
           if(! exists $opt_HHR->{$optname2}) { 
             printf STDERR ("ERROR, $sub_name option $optname2 listed as required with $optname does not exist.\n"); 

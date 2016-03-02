@@ -42,17 +42,19 @@ my %opt_group_desc_H = ();
 
 # Add all options to %opt_HH and @opt_order_A.
 # This section needs to be kept in sync (manually) with the &GetOptions call below
+
 $opt_group_desc_H{"1"} = "basic options";
 #     option            type       default               group   requires incompat   preamble-output   help-output    
 opt_Add("-h",           "boolean", 0,                        0,    undef, undef,     undef,            "display this help",                  \%opt_HH, \@opt_order_A);
 opt_Add("-r",           "boolean", 0,                        1,    undef, undef,     "reverse order",  "print numbers in reverse order",     \%opt_HH, \@opt_order_A);
 opt_Add("-1",           "boolean", 0,                        1,    undef, undef,     "single line",    "print all numbers on a single line", \%opt_HH, \@opt_order_A);
+
 $opt_group_desc_H{"2"} = "options affecting difference (step size) between successive numbers (only 1 allowed)";
-#     option            type       default               group   requires incompat                        preamble-output                                       help-output                      
-opt_Add("--step",       "integer", 1,                        2,    undef,"--realstep,--mult,--realmult",  "integer step size between numbers",                  "set integer step size between numbers to <n>",                     \%opt_HH, \@opt_order_A);
-opt_Add("--realstep",   "real",    undef,                    2,    undef,"--step,--mult,--realmult",      "step size between numbers",                          "set (real value) step size between numbers to <x>",                \%opt_HH, \@opt_order_A);
-opt_Add("--mult",       "integer", undef,                    2,    undef,"--step,--realstep,--realmult",  "multiplicative step size between numbers (integer)", "set multiplicative step size between numbers to <n>",              \%opt_HH, \@opt_order_A);
-opt_Add("--realmult",   "real",    undef,                    2,    undef,"--step,--realstep,--mult",      "integer step size between numbers (real)",           "set multiplicative (real value) step size between numbers to <x>", \%opt_HH, \@opt_order_A);
+#     option            type       default               group   requires incompat         preamble-output                      help-output                      
+opt_Add("--step",       "integer", 1,                        2,    undef, "--realstep",    "integer step size between numbers", "set integer step size between numbers to <n>",               \%opt_HH, \@opt_order_A);
+opt_Add("--mult",       "boolean", 0,                        2, "--step", "--realstep",    "multiplicative mode",               "multiplicative mode, number n+1 is a multiple of number n",  \%opt_HH, \@opt_order_A);
+opt_Add("--realstep",   "real",    undef,                    2,    undef, "--step,--mult", "step size between numbers (real)",  "set (real value) step size between numbers to <x>",          \%opt_HH, \@opt_order_A);
+
 $opt_group_desc_H{"3"} = "options affecting where output goes";
 #     option            type       default               group   requires incompat   preamble-output           help-output    
 opt_Add("--outfile",    "string",  undef,                    3,    undef, undef,     "saving output to file",  "saving output to file <s>", \%opt_HH, \@opt_order_A);
@@ -70,9 +72,8 @@ my $options_okay =
                 '1'            => \$GetOptions_H{"-1"},
 # options affecting difference between successive numbers
                 'step=s'       => \$GetOptions_H{"--step"},
+                'mult'         => \$GetOptions_H{"--mult"},
                 'realstep=s'   => \$GetOptions_H{"--realstep"},
-                'mult=s'       => \$GetOptions_H{"--mult"},
-                'realmult=s'   => \$GetOptions_H{"--realmult"},
 # options affecting output
                 'outfile=s'    => \$GetOptions_H{"--outfile"});
 
@@ -107,41 +108,44 @@ opt_SetFromUserHash(\%GetOptions_H, \%opt_HH);
 # validate options (check for conflicts)
 opt_ValidateSet(\%opt_HH, \@opt_order_A);
 
+# do some manually checking that is (currently) too sophisticated for epn-options.pm
+if(opt_IsUsed("--step", \%opt_HH) && (opt_Get("--step", \%opt_HH) < 1)) { 
+  die sprintf("ERROR, with --step <n> <n> must be >= 1, you used <n> of %d\n", opt_Get("--step", \%opt_HH));
+}
+if(opt_IsUsed("--mult", \%opt_HH) && (opt_Get("--step", \%opt_HH) <= 1)) { 
+  die sprintf("ERROR, with --mult, and --step <n>, <n> must be > 1, you used <n> of %d\n", opt_Get("--step", \%opt_HH));
+}
+
 # set up output
 my $FH = undef;
 if(opt_IsUsed("--outfile", \%opt_HH)) { 
-  my $outfile = opt_Get("--outfile", \%opt_HH);
-  open($FH, ">", $outfile) || die "ERROR unable to open $outfile for writing";
+    my $outfile = opt_Get("--outfile", \%opt_HH);
+open($FH, ">", $outfile) || die "ERROR unable to open $outfile for writing";
 }
 else { 
   $FH = *STDOUT;
 }
 
-# determine step size and type (default (additive) or multiplicative)
+# determine step size 
 my $step = 1; # default value
-my $do_mult = 0; # set to '1' if --mult or --realmult used on command line
-# opt_ValidateSet has already enforced that at most one of --step, --realstep, --mult, and --realstep
+# opt_ValidateSet has already enforced that at most one of --step and --realstep
 # was set on the cmdline, by using the 'incompatible' column in the opt_Add() calls above.
 if(opt_IsUsed("--step", \%opt_HH)) { 
   $step = opt_Get("--step", \%opt_HH);
 }
 elsif(opt_IsUsed("--realstep", \%opt_HH)) { 
+
   $step = opt_Get("--realstep", \%opt_HH);
 }
-elsif(opt_IsUsed("--mult", \%opt_HH)) { 
-  $step = opt_Get("--mult", \%opt_HH);
-  $do_mult = 1;
-}
-elsif(opt_IsUsed("--realmult", \%opt_HH)) { 
-  $step = opt_Get("--realmult", \%opt_HH);
-  $do_mult = 1;
-}
+
+# determine step type (default (additive) or multiplicative)
+my $do_mult = opt_Get("--mult", \%opt_HH);
 
 # are we going in reverse order?
 my $do_rev = opt_Get("-r", \%opt_HH);
 
 # set first value;
-my $cur = ($do_rev) ? $max : 0;
+my $cur = ($do_rev) ? $max : 1;
 
 my $keep_going = 1; # set to '0' when we should stop in loop below
 while($keep_going) { 
@@ -170,7 +174,7 @@ while($keep_going) {
 
 if(opt_IsUsed("--outfile", \%opt_HH)) { 
   close $FH;
-  printf("Output saved to %s.\n", opt_IsUsed("--outfile", \%opt_HH));
+  printf("Output saved to %s.\n", opt_Get("--outfile", \%opt_HH));
 }
 
 exit 0;
