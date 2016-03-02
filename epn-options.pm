@@ -388,6 +388,32 @@ sub opt_SetByUser {
 }
 
 #####################################################################
+# Subroutine: opt_Exists()
+# Incept:     EPN, Wed Mar  2 14:37:02 2016
+# 
+# Purpose:    Given an option ($optname) check if it exists
+#             in $opt_HHR. Return '1' if it does, else return '0'.
+#
+# Arguments:
+# $optname:   option to check for
+# $opt_HHR:   ref to %opt_HH (see description at top of this file)
+#
+# Returns:    void
+#
+# Dies:       neve
+#
+####################################################################
+sub opt_Exists {
+  my $narg_expected = 2;
+  my $sub_name = "opt_Exists()";
+  if(scalar(@_) != $narg_expected) { printf STDERR ("ERROR, $sub_name entered with %d != %d input arguments.\n", scalar(@_), $narg_expected); exit(1); } 
+
+  my ($optname, $opt_HHR) = @_;
+
+  return (%{$opt_HHR->{$optname}}) ? 1 : 0;
+}
+
+#####################################################################
 # Subroutine: opt_ValidateSet()
 # Incept:     EPN, Thu Oct 30 08:53:54 2014
 # 
