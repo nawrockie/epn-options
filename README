@@ -4,7 +4,7 @@
 # 
 # Take a look at the code in example.pl, and read the comments, 
 # and possibly also the code and comments in epn-options.pm,
-# to get an idea of the module works.
+# to get an idea of the how module works.
 #
 # example.pl may be a useful starting template for you when
 # writing scripts that use epn-options.pm
@@ -83,8 +83,8 @@ ERROR, opt_ValidateSet() option --step and --realstep are incompatible, choose o
 #
 ###########################################################################
 #
-# 3. Advanced option handling not currently implemented by
-#    epn-options.pm. In some situations, like these listed below,
+# 3. Advanced option handling is not currently implemented by
+#    epn-options.pm. In some situations, such as these listed below,
 #    you'll be forced to add code that doesn't use epn-options.pm
 #    to do what you want. 
 #
