@@ -20,7 +20,7 @@ use warnings;
 #         2D key: string denoting type of information 
 #                 (one of "type", "default", "group", "requires", "incompatible", "preamble", "help")
 #         value:  string explaining 2D key:
-#                 "type":          "boolean", "string", "int" or "real"
+#                 "type":          "boolean", "string", "integer" or "real"
 #                 "default":       default value for option, in double or single quotes
 #                 "group":         positive integer denoting group number this option belongs to
 #                 "requires":      string of 0 or more other options this option requires to work, each separated by a ','
@@ -410,7 +410,7 @@ sub opt_Exists {
 
   my ($optname, $opt_HHR) = @_;
 
-  return (%{$opt_HHR->{$optname}}) ? 1 : 0;
+  return (defined $opt_HHR->{$optname}) ? 1 : 0;
 }
 
 #####################################################################
