@@ -410,7 +410,7 @@ sub opt_Exists {
 
   my ($optname, $opt_HHR) = @_;
 
-  return (defined $opt_HHR->{$optname}) ? 1 : 0;
+  return ((defined $opt_HHR) && (exists $opt_HHR->{$optname})) ? 1 : 0;
 }
 
 #####################################################################
