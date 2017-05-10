@@ -565,9 +565,9 @@ sub opt_OutputPreamble {
   }
 
   my $width_lhs = maxLengthScalarInArray(\@lhs_A);
-  my $width_rhs = maxLengthScalarInArray(\@rhs_A);
+  #my $width_rhs = maxLengthScalarInArray(\@rhs_A);
   for($i = 0; $i < $nlines; $i++) { 
-    printf $FH ("%-*s  %-*s\n", $width_lhs, $lhs_A[$i], $width_rhs, $rhs_A[$i]); 
+    printf $FH ("%-*s  %-s\n", $width_lhs, $lhs_A[$i], $rhs_A[$i]); 
   }
   print $FH ("\# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
 
