@@ -4,7 +4,7 @@
 # Eric Nawrocki
 # EPN, Tue Oct 28 14:16:44 2014 [rnavore (rvr-options.pm)]
 # EPN, Tue Feb 23 13:34:31 2016 [incorporation into dnaorg]
-# version: $Id$
+# version: 0.01
 #
 # Many aspects of this module are modelled after Easel's esl_getopts module
 # by Sean Eddy (bioeasel.org).
