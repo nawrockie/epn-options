@@ -124,11 +124,15 @@ sub opt_Add {
   if(defined $requires) { 
     if($requires eq "*") { 
       if(! defined $incompatible) { 
-        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $requires in requires string, but incompatible string is undefined (it should be $requires also)."); 
+        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $requires in requires string, but incompatible string is undefined (it should be $requires also).\n"); 
         exit(1);
       }
       if($incompatible ne "*") { 
-        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $requires in requires string, but incompatible string is $incompatible (it should be $requires also)."); 
+        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $requires in requires string, but incompatible string is $incompatible (it should be $requires also).\n"); 
+        exit(1);
+      }
+      if(defined $default) { 
+        printf STDERR ("ERROR, $sub_name, with required options, default value must be 'undef', but for $optname default value is $default\n");
         exit(1);
       }
       # if we get here, both $requires and $incompatible are "*", make this option required
@@ -138,7 +142,7 @@ sub opt_Add {
       foreach $tmp_option (split(",", $requires)) { 
         if($tmp_option !~ m/^\-[^\-]$/ && 
            $tmp_option !~ m/^\-\-[^\-][^\-]+/) { 
-          printf STDERR ("ERROR, $sub_name, option $tmp_option in requires string ($requires) violates naming convention:\n$naming_convention_desc."); 
+          printf STDERR ("ERROR, $sub_name, option $tmp_option in requires string ($requires) violates naming convention:\n$naming_convention_desc.\n"); 
           exit(1); 
         }
       }
@@ -149,16 +153,16 @@ sub opt_Add {
   if(defined $incompatible) { 
     if($incompatible eq "*") { 
       if(! defined $incompatible) { 
-        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $incompatible in incompatible string, but requires string is undefined (it should be $incompatible also)."); 
+        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $incompatible in incompatible string, but requires string is undefined (it should be $incompatible also).\n"); 
         exit(1);
       }
       if($requires ne "*") { 
-        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $incompatible in incompatible string, but requires string is $requires (it should be $incompatible also)."); 
+        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $incompatible in incompatible string, but requires string is $requires (it should be $incompatible also).\n"); 
         exit(1);
       }
       # if we get here, both $requires and $incompatible are "*", make this option required
       if(! $is_required_flag) { 
-        printf STDERR ("ERROR, $sub_name, internal error making $tmp_option required.");
+        printf STDERR ("ERROR, $sub_name, internal error making $tmp_option required.\n");
         exit(1);
       }
     }
@@ -166,7 +170,7 @@ sub opt_Add {
       foreach $tmp_option (split(",", $incompatible)) { 
         if($tmp_option !~ m/^\-[^\-]$/ && 
            $tmp_option !~ m/^\-\-[^\-][^\-]+/) { 
-          printf STDERR ("ERROR, $sub_name, option $tmp_option in incompatible string ($incompatible) violates naming convention:\n$naming_convention_desc."); 
+          printf STDERR ("ERROR, $sub_name, option $tmp_option in incompatible string ($incompatible) violates naming convention:\n$naming_convention_desc.\n"); 
           exit(1); 
         }
       }
