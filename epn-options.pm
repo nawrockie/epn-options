@@ -24,7 +24,9 @@ use warnings;
 #                 "default":       default value for option, in double or single quotes
 #                 "group":         positive integer denoting group number this option belongs to
 #                 "requires":      string of 0 or more other options this option requires to work, each separated by a ','
+#                                  special case: "*" for 'required' option ('incompatible' must be "*" as well)
 #                 "incompatible":  string of 0 or more other options this option is incompatible with, each separated by a ','
+#                                  special case: "*" for 'required' option ('required' must be "*" as well)
 #                 "preamble":      string describing option for preamble section (beginning of output from script)
 #                 "help":          string describing option for help section (printed if -h used)
 #                 "setby":         '1' if option set by user, else 'undef'
@@ -74,6 +76,7 @@ sub opt_Add {
   $naming_convention_desc   .= "\t\t--aa (double dash followed by > 1 char)\n";
   $naming_convention_desc   .= "\tAnd no internal dashes or commas allowed.\n"; 
   my $tmp_option;
+  my $is_required_flag = 0; # set to '1' if this option is 'required'
 
   # contract checks
   if(exists $opt_HHR->{$optname})                                    { print STDERR ("ERROR, $sub_name trying to add $optname, but it already exists.\n"); exit(1); } 
@@ -119,28 +122,64 @@ sub opt_Add {
 
   # check requires string
   if(defined $requires) { 
-    foreach $tmp_option (split(",", $requires)) { 
-      if($tmp_option !~ m/^\-[^\-]$/ && 
-         $tmp_option !~ m/^\-\-[^\-][^\-]+/) { 
-        printf STDERR ("ERROR, $sub_name, option $tmp_option in requires string ($requires) violates naming convention:\n$naming_convention_desc."); 
-        exit(1); 
+    if($requires eq "*") { 
+      if(! defined $incompatible) { 
+        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $requires in requires string, but incompatible string is undefined (it should be $requires also)."); 
+        exit(1);
+      }
+      if($incompatible ne "*") { 
+        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $requires in requires string, but incompatible string is $incompatible (it should be $requires also)."); 
+        exit(1);
+      }
+      # if we get here, both $requires and $incompatible are "*", make this option required
+      $is_required_flag = 1;
+    }
+    else { 
+      foreach $tmp_option (split(",", $requires)) { 
+        if($tmp_option !~ m/^\-[^\-]$/ && 
+           $tmp_option !~ m/^\-\-[^\-][^\-]+/) { 
+          printf STDERR ("ERROR, $sub_name, option $tmp_option in requires string ($requires) violates naming convention:\n$naming_convention_desc."); 
+          exit(1); 
+        }
       }
     }
   }
 
   # check incompatible string
   if(defined $incompatible) { 
-    foreach $tmp_option (split(",", $incompatible)) { 
-      if($tmp_option !~ m/^\-[^\-]$/ && 
-         $tmp_option !~ m/^\-\-[^\-][^\-]+/) { 
-        printf STDERR ("ERROR, $sub_name, option $tmp_option in incompatible string ($incompatible) violates naming convention:\n$naming_convention_desc."); 
-        exit(1); 
+    if($incompatible eq "*") { 
+      if(! defined $incompatible) { 
+        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $incompatible in incompatible string, but requires string is undefined (it should be $incompatible also)."); 
+        exit(1);
+      }
+      if($requires ne "*") { 
+        printf STDERR ("ERROR, $sub_name, option $tmp_option has special value $incompatible in incompatible string, but requires string is $requires (it should be $incompatible also)."); 
+        exit(1);
+      }
+      # if we get here, both $requires and $incompatible are "*", make this option required
+      if(! $is_required_flag) { 
+        printf STDERR ("ERROR, $sub_name, internal error making $tmp_option required.");
+        exit(1);
+      }
+    }
+    else { 
+      foreach $tmp_option (split(",", $incompatible)) { 
+        if($tmp_option !~ m/^\-[^\-]$/ && 
+           $tmp_option !~ m/^\-\-[^\-][^\-]+/) { 
+          printf STDERR ("ERROR, $sub_name, option $tmp_option in incompatible string ($incompatible) violates naming convention:\n$naming_convention_desc."); 
+          exit(1); 
+        }
       }
     }
   }
   
   # initialize
   %{$opt_HHR->{$optname}} = ();
+  # undefine $incompatible and $requires if $is_required_flag raised
+  if($is_required_flag) { 
+    $incompatible = undef;
+    $requires     = undef; 
+  }
   # fill
   $opt_HHR->{$optname}{"type"}         = $type;
   $opt_HHR->{$optname}{"default"}      = $default;
@@ -152,6 +191,12 @@ sub opt_Add {
 
   $opt_HHR->{$optname}{"setby"}        = "default";
   $opt_HHR->{$optname}{"value"}        = $default;
+  if($is_required_flag) { 
+    $opt_HHR->{$optname}{"is_required"} = 1;
+  }
+  else { 
+    $opt_HHR->{$optname}{"is_required"} = 0;
+  }
 
   push(@{$opt_order_AR}, $optname);
 
@@ -440,6 +485,70 @@ sub opt_ValidateSet {
   my $optname;
   my $optname2;
   my @optname2_A = ();
+  my $optname3;
+  my @optname3_A = ();
+
+  # before checking the options that the user set, check that all the 
+  # options are internally consistent:
+  # 1. no required option should be incompatible or required by another option.
+  #    (it is required by all other options, so having it required by any one option is silly.)
+  # 2. no option should be incompatible with a required option
+  # 3. no option should require and be incompatible with the same option
+  foreach $optname (@{$opt_order_AR}) { 
+    # 1. no required option should be incompatible or required by another option.
+    #    (it is required by all other options, so having it required by any one option is silly.)
+    if(defined $opt_HHR->{$optname}{"incompatible"}) { 
+      @optname2_A = split(",", $opt_HHR->{$optname}{"incompatible"});
+      foreach $optname2 (@optname2_A) { 
+        if(! exists $opt_HHR->{$optname2}) { 
+            printf STDERR ("ERROR, in $sub_name, option $optname2 listed as incompatible with $optname does not exist.\n"); 
+            exit(1);
+        }
+        if($opt_HHR->{$optname2}{"is_required"} == 1) { 
+          printf STDERR ("ERROR, in $sub_name, option $optname is incompatible with the required option $optname2, this is not allowed.\n"); 
+          exit(1);
+        }
+      }
+    }
+    # 2. no option should be incompatible with a required option
+    if(defined $opt_HHR->{$optname}{"requires"}) { 
+      @optname2_A = split(",", $opt_HHR->{$optname}{"requires"});
+      foreach $optname2 (@optname2_A) { 
+        if(! exists $opt_HHR->{$optname2}) { 
+            printf STDERR ("ERROR, in $sub_name, option $optname2 listed as required with $optname does not exist.\n"); 
+            exit(1);
+        }
+        if($opt_HHR->{$optname2}{"is_required"} == 1) { 
+          printf STDERR ("ERROR, in $sub_name, option $optname is listed as required in combination with the required option $optname2, this is not allowed (all options are implicitly required in combination with required options).\n"); 
+          exit(1);
+        }
+      }
+    }
+    # 3. no option should require and be incompatible with the same option
+    if((defined $opt_HHR->{$optname}{"incompatible"}) && 
+       (defined $opt_HHR->{$optname}{"requires"})) { 
+      @optname2_A = split(",", $opt_HHR->{$optname}{"incompatible"});
+      @optname3_A = split(",", $opt_HHR->{$optname}{"requires"});
+      foreach $optname2 (@optname2_A) { 
+        foreach $optname3 (@optname3_A) { 
+          if($optname2 eq $optname3) { 
+            printf STDERR ("ERROR, in $sub_name, option $optname2 is listed as required and incompatible with $optname, this is not allowed.\n"); 
+            exit(1);
+          }
+        }
+      }
+    }
+  }
+       
+  # check that all required options were set
+  foreach $optname (@{$opt_order_AR}) { 
+    if($opt_HHR->{$optname}{"is_required"} == 1) { 
+      if($opt_HHR->{$optname}{"setby"} ne "user") { 
+        printf STDERR ("ERROR, REQUIRED option $sub_name was not used.\n"); 
+        exit(1);
+      }
+    }
+  }
 
   # check for incompatible options
   foreach $optname (@{$opt_order_AR}) { 
