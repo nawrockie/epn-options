@@ -83,42 +83,6 @@ sub opt_Add {
   if($optname !~ m/^\-[^\-,]$/ && $optname !~ m/^\-\-[^\-,][^\-,]+/) { print STDERR ("ERROR, $sub_name option $optname violates naming convention:\n$naming_convention_desc."); exit(1); }
   if($group !~ m/^\d+$/)                                             { print STDERR ("ERROR, $sub_name trying to add $optname, group is not an integer ($group).\n"); exit(1); } 
 
-  # make sure $type makes sense in conjuction with $default and $help
-  if($type eq "boolean") { 
-    if(! defined $default) { 
-      print STDERR ("ERROR, $sub_name trying to add $optname of 'boolean' type but default is undefined.\n"); exit(1); 
-    }
-    if($default != 0 && $default != 1) { 
-      print STDERR ("ERROR, $sub_name trying to add $optname of 'boolean' type but default is not '0' or '1'.\n"); exit(1); 
-    } 
-    if(defined $help && $help =~ m/\<\w\>/) { 
-      print STDERR ("ERROR, $sub_name trying to add $optname of 'boolean' type but help string has <> in it ($help).\n"); exit(1); 
-    }
-  }
-  elsif($type eq "integer") { 
-    if(defined $default && (! verify_integer($default))) { 
-      print STDERR ("ERROR, $sub_name trying to add $optname of 'integer' type but default is $default.\n"); exit(1); 
-    }
-    if(defined $help && $help !~ m/\<n\>/) { 
-      print STDERR ("ERROR, $sub_name trying to add $optname of 'integer' type but help string does not have <n> in it ($help).\n"); exit(1); 
-    }
-  }
-  elsif($type eq "real") { 
-    if(defined $default && (! verify_real($default))) { 
-      print STDERR ("ERROR, $sub_name trying to add $optname of 'real' type but default is $default.\n"); exit(1); 
-    }
-    if(defined $help && $help !~ m/\<x\>/) { 
-      print STDERR ("ERROR, $sub_name trying to add $optname of 'real' type but help string does not have <x> in it ($help).\n"); exit(1); 
-    }
-  }
-  elsif($type eq "string") { 
-    if(defined $help && $help !~ m/\<s\>/) { 
-      print STDERR ("ERROR, $sub_name trying to add $optname of 'string' type but help string does not have <s> in it ($help).\n"); exit(1); 
-    }
-  }
-  else { 
-    print STDERR ("ERROR, $sub_name trying to add $optname of unknown type: $type.\n"); exit(1); 
-  }
 
   # check requires string
   if(defined $requires) { 
@@ -177,6 +141,46 @@ sub opt_Add {
     }
   }
   
+  # make sure $type makes sense in conjuction with $default and $help
+  # do this after we set $is_required_flag, so we can ignore type/default inconsistencies for boolean if $is_required_flag
+  if($type eq "boolean") { 
+    if(! $is_required_flag) { 
+      if(! defined $default) { 
+        print STDERR ("ERROR, $sub_name trying to add $optname of 'boolean' type but default is undefined.\n"); exit(1); 
+      }
+      if($default != 0 && $default != 1) { 
+        print STDERR ("ERROR, $sub_name trying to add $optname of 'boolean' type but default is not '0' or '1'.\n"); exit(1); 
+      } 
+    }
+    if(defined $help && $help =~ m/\<\w\>/) { 
+      print STDERR ("ERROR, $sub_name trying to add $optname of 'boolean' type but help string has <> in it ($help).\n"); exit(1); 
+    }
+  }
+  elsif($type eq "integer") { 
+    if(defined $default && (! verify_integer($default))) { 
+      print STDERR ("ERROR, $sub_name trying to add $optname of 'integer' type but default is $default.\n"); exit(1); 
+    }
+    if(defined $help && $help !~ m/\<n\>/) { 
+      print STDERR ("ERROR, $sub_name trying to add $optname of 'integer' type but help string does not have <n> in it ($help).\n"); exit(1); 
+    }
+  }
+  elsif($type eq "real") { 
+    if(defined $default && (! verify_real($default))) { 
+      print STDERR ("ERROR, $sub_name trying to add $optname of 'real' type but default is $default.\n"); exit(1); 
+    }
+    if(defined $help && $help !~ m/\<x\>/) { 
+      print STDERR ("ERROR, $sub_name trying to add $optname of 'real' type but help string does not have <x> in it ($help).\n"); exit(1); 
+    }
+  }
+  elsif($type eq "string") { 
+    if(defined $help && $help !~ m/\<s\>/) { 
+      print STDERR ("ERROR, $sub_name trying to add $optname of 'string' type but help string does not have <s> in it ($help).\n"); exit(1); 
+    }
+  }
+  else { 
+    print STDERR ("ERROR, $sub_name trying to add $optname of unknown type: $type.\n"); exit(1); 
+  }
+
   # initialize
   %{$opt_HHR->{$optname}} = ();
   # undefine $incompatible and $requires if $is_required_flag raised
