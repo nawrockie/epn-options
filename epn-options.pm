@@ -552,7 +552,7 @@ sub opt_ValidateSet {
   foreach $optname (@{$opt_order_AR}) { 
     if($opt_HHR->{$optname}{"is_required"} == 1) { 
       if($opt_HHR->{$optname}{"setby"} ne "user") { 
-        printf STDERR ("ERROR, REQUIRED option $sub_name was not used.\n"); 
+        printf STDERR ("ERROR, REQUIRED option $optname was not used.\n"); 
         exit(1);
       }
     }
