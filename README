@@ -1,6 +1,6 @@
 # epn-options.pm
-# version 0.03
-# May 2017
+# version 0.04
+# Feb 2019
 #
 # This file explains some aspects of the epn-options.pm module.
 # 
@@ -12,6 +12,10 @@
 # writing scripts that use epn-options.pm
 # Preliminary step. Make a copy of example.pl that you will modify:
 > cp example.pl my-example.pl
+#
+# Additionally, look at the example-required.pl script to see an
+# example of how to use a required option. example-required.pl is
+# identical to example.pl except that the --step option is required.
 #
 ###########################################################################
 #
@@ -56,7 +60,8 @@ ERROR, opt_Add() option -step violates naming convention:
 # options listed here, separated by a single ','. For example look at
 # the opt_Add() call for --mult in example.pl:
 #
-##     option            type       default               group   requires incompat         preamble-output                      help-output                # opt_Add("--mult",       "boolean", 0,                        2, "--step", "--realstep",    "multiplicative mode",               "multiplicative mode, number n+1 is a multiple of number n",  \%opt_HH, \@opt_order_A);
+##     option            type       default               group   requires incompat         preamble-output                      help-output                
+# opt_Add("--mult",       "boolean", 0,                        2, "--step", "--realstep",    "multiplicative mode",               "multiplicative mode, number n+1 is a multiple of number n",  \%opt_HH, \@opt_order_A);
 
 # This specifies that the --mult option must be used in combination
 # with the --step option. Try running the script with only --mult
@@ -72,6 +77,12 @@ ERROR, opt_ValidateSet() option --step is required in combination with --mult, b
 # Note that the 'requires' column is 'undef', meaning that --step does
 # not require any other options be set for it to work.
 #
+# As a special case, if the 'requires' and 'incompatible' columns are 
+# '*' then this option is required whenever the program is run. 
+# An example of this is the "--step" option in the example-required.pl
+# script:
+##     option            type       default               group   requires incompat   preamble-output                                help-output                
+#opt_Add("--step",       "integer", undef,                    1,    "*",   "*",       "REQUIRED: integer step size between numbers", "REQUIRED: set integer step size between numbers to <n>", \%opt_HH, \@opt_order_A);
 #
 # The 'incompatible' column of an 'opt_Add()' function call (the
 # 6th column) is like 'requires' but it specifies what other 
